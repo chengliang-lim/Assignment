@@ -1,0 +1,88 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Accounts {
+  id      String  @id @default(uuid())
+  email   String
+  role    Role    @default(USER)
+  enabled Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  clientAccount     ClientAccounts?
+  adminAccount      AdminAccounts?
+  passwordHistories PasswordHistories[]
+
+  @@unique([email, role])
+  @@index([email, role, enabled])
+}
+
+model ClientAccounts {
+  id            String @id @default(uuid())
+  firstName     String
+  lastName      String
+  contactNumber Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  account   Accounts @relation(fields: [accountId], references: [id])
+  accountId String   @unique
+}
+
+model AdminAccounts {
+  id        String   @id @default(uuid())
+  account   Accounts @relation(fields: [accountId], references: [id])
+  accountId String   @unique
+  firstName String
+  lastName  String
+
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  Products  Products[]
+}
+
+model PasswordHistories {
+  id           String  @id @default(uuid())
+  passwordHash String
+  enabled      Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  Accounts   Accounts @relation(fields: [accountsId], references: [id])
+  accountsId String
+}
+
+model RefreshTokens {
+  id String @id @default(uuid())
+  
+}
+
+model Products {
+  id          String @id @default(uuid())
+  name        String @unique
+  description String
+  quantity    Int    @default(1)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  createdBy   AdminAccounts @relation(fields: [createdById], references: [id])
+  createdById String
+}
+
+enum Role {
+  USER
+  ADMIN
+}
